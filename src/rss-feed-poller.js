@@ -1,8 +1,18 @@
 import NodePie from 'nodepie';
 import request from 'request-promise';
+import * as fs from 'fs';
 
 export default function getFeed(options) {
     let lastTime = 0;
+
+    try {
+        lastTime = JSON.parse(fs.readFileSync("saved_" + options.id + ".json")).lastTime;
+    } catch (err) {
+        // unable to find last time, set it to 0
+        options.robot.logger.debug(err);
+        lastTime = 0;
+    }
+
     async function checkFeed() {
         const time = new Date().getTime();
         options.robot.logger.debug(`Checking ${options.name || 'unnamed feed'} at ${time}`);
@@ -29,8 +39,11 @@ export default function getFeed(options) {
                 );
             }
         }
-
         lastTime = time;
+        var data = {
+            "lastTime": lastTime,
+        }
+        fs.writeFileSync("saved_" + options.id + ".json", JSON.stringify(data));
     }
 
     function startFeed() {
